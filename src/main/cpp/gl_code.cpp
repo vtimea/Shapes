@@ -7,10 +7,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <vector>
+
+#include "glm/glm/glm.hpp"
 
 #define  LOG_TAG    "libgl2jni"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+
+std::vector<float> projMatrix;
 
 static void printGLString(const char *name, GLenum s) {
     const char *v = (const char *) glGetString(s);
@@ -25,9 +30,10 @@ static void checkGlError(const char *op) {
 }
 
 auto gVertexShader =
+        "uniform mat4 projMatrix;\n"
         "attribute vec4 vPosition;\n"
         "void main() {\n"
-        "  gl_Position = vPosition;\n"
+        "  gl_Position = projMatrix * vPosition;\n"
         "}\n";
 
 auto gFragmentShader =
@@ -120,8 +126,20 @@ bool setupGraphics(int w, int h) {
     LOGI("glGetAttribLocation(\"vPosition\") = %d\n",
          gvPositionHandle);
 
-    glViewport(0, 0, h, h);
+    glViewport(0, 0, w, h);
     checkGlError("glViewport");
+
+    glUseProgram(gProgram);
+    float ratio = h / (float) w;
+    projMatrix = {ratio, 0, 0, 0,
+                  0, 1, 0, 0,
+                  0, 0, 1, 0,
+                  0, 0, 0, 1};
+
+    GLint loc = glGetUniformLocation(gProgram, "projMatrix");
+    if (loc != -1) {
+        glUniformMatrix4fv(loc, 1, false, &projMatrix[0]);
+    }
     return true;
 }
 
