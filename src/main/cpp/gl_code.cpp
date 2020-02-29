@@ -95,7 +95,7 @@ GLuint createProgram(const char *pVertexSource, const char *pFragmentSource) {
 
 GLuint gProgram;
 GLuint gvPositionHandle;
-const float SCALE = 100;
+const float SCALE = 150;
 
 bool setupGraphics(int w, int h) {
     LOGI("setupGraphics(%d, %d)", w, h);
@@ -131,12 +131,16 @@ void setColor(glm::vec3 color) {
     }
 }
 
-class Polygon {
+class Triangle {
     std::vector<vec2> mPoints;
     vec3 mColor;
 
 public:
-    Polygon(std::vector<glm::vec2> points, vec3 color) : mPoints{points}, mColor(color) {}
+    Triangle(vec2 p1, vec2 p2, vec2 p3, vec3 color) : mColor(color) {
+        mPoints.push_back(p1);
+        mPoints.push_back(p2);
+        mPoints.push_back(p3);
+    }
 
     void draw() const {
         setColor(mColor);
@@ -146,10 +150,45 @@ public:
     }
 };
 
-const Polygon triangle = Polygon({{-20.f, -20.f},
-                                  {0.f,   17.32f},
-                                  {20.f,  -20.f}},
-                                 {0.f, 1.f, 0.f});
+class Rectangle {
+    std::vector<vec2> mPoints;
+    vec3 mColor;
+
+public:
+    Rectangle(vec2 p1, vec2 p2, vec2 p3, vec2 p4, vec3 color) : mColor(color) {
+        mPoints.push_back(p1);
+        mPoints.push_back(p2);
+        mPoints.push_back(p3);
+        mPoints.push_back(p4);
+    }
+
+    void draw() const {
+        std::vector<vec2> vertices;
+        for (int i = 0; i < 3; i++) { vertices.push_back(mPoints[i]); }
+        vertices.push_back(mPoints[2]);
+        vertices.push_back(mPoints[3]);
+        vertices.push_back(mPoints[0]);
+
+        setColor(mColor);
+        glVertexAttribPointer(gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0, &vertices[0]);
+        glEnableVertexAttribArray(gvPositionHandle);
+        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+    }
+};
+
+const Triangle triangle = Triangle({-20.f,
+                                    -20.f},
+                                   {0.f, 17.32f},
+                                   {20.f, -20.f},
+                                   {0.f, 1.f, 0.f});
+
+const Rectangle rectangle = Rectangle(
+        {-40, 50},
+        {-40, 10},
+        {0, 10},
+        {0, 50},
+        {1.f, 0.f, 0.f}
+);
 
 void renderFrame() {
     static float black = 0.f;
@@ -158,6 +197,7 @@ void renderFrame() {
 
     glUseProgram(gProgram);
     triangle.draw();
+    rectangle.draw();
 }
 
 extern "C" {
