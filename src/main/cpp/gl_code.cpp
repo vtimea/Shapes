@@ -17,26 +17,26 @@ static void printGLString(const char *name, GLenum s) {
     LOGI("GL %s = %s\n", name, v);
 }
 
-static void checkGlError(const char* op) {
+static void checkGlError(const char *op) {
     for (GLint error = glGetError(); error; error
-            = glGetError()) {
+                                                    = glGetError()) {
         LOGI("after %s() glError (0x%x)\n", op, error);
     }
 }
 
 auto gVertexShader =
-    "attribute vec4 vPosition;\n"
-    "void main() {\n"
-    "  gl_Position = vPosition;\n"
-    "}\n";
+        "attribute vec4 vPosition;\n"
+        "void main() {\n"
+        "  gl_Position = vPosition;\n"
+        "}\n";
 
 auto gFragmentShader =
-    "precision mediump float;\n"
-    "void main() {\n"
-    "  gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);\n"
-    "}\n";
+        "precision mediump float;\n"
+        "void main() {\n"
+        "  gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);\n"
+        "}\n";
 
-GLuint loadShader(GLenum shaderType, const char* pSource) {
+GLuint loadShader(GLenum shaderType, const char *pSource) {
     GLuint shader = glCreateShader(shaderType);
     if (shader) {
         glShaderSource(shader, 1, &pSource, NULL);
@@ -47,11 +47,11 @@ GLuint loadShader(GLenum shaderType, const char* pSource) {
             GLint infoLen = 0;
             glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
             if (infoLen) {
-                char* buf = (char*) malloc(static_cast<size_t>(infoLen));
+                char *buf = (char *) malloc(static_cast<size_t>(infoLen));
                 if (buf) {
                     glGetShaderInfoLog(shader, infoLen, NULL, buf);
                     LOGE("Could not compile shader %d:\n%s\n",
-                            shaderType, buf);
+                         shaderType, buf);
                     free(buf);
                 }
                 glDeleteShader(shader);
@@ -62,7 +62,7 @@ GLuint loadShader(GLenum shaderType, const char* pSource) {
     return shader;
 }
 
-GLuint createProgram(const char* pVertexSource, const char* pFragmentSource) {
+GLuint createProgram(const char *pVertexSource, const char *pFragmentSource) {
     GLuint vertexShader = loadShader(GL_VERTEX_SHADER, pVertexSource);
     if (!vertexShader) {
         return 0;
@@ -86,7 +86,7 @@ GLuint createProgram(const char* pVertexSource, const char* pFragmentSource) {
             GLint bufLength = 0;
             glGetProgramiv(program, GL_INFO_LOG_LENGTH, &bufLength);
             if (bufLength) {
-                char* buf = (char*) malloc(static_cast<size_t>(bufLength));
+                char *buf = (char *) malloc(static_cast<size_t>(bufLength));
                 if (buf) {
                     glGetProgramInfoLog(program, bufLength, NULL, buf);
                     LOGE("Could not link program:\n%s\n", buf);
@@ -118,21 +118,22 @@ bool setupGraphics(int w, int h) {
     gvPositionHandle = static_cast<GLuint>(glGetAttribLocation(gProgram, "vPosition"));
     checkGlError("glGetAttribLocation");
     LOGI("glGetAttribLocation(\"vPosition\") = %d\n",
-            gvPositionHandle);
+         gvPositionHandle);
 
-    glViewport(0, 0, w, h);
+    glViewport(0, 0, h, h);
     checkGlError("glViewport");
     return true;
 }
 
-const GLfloat gTriangleVertices[] = { 0.0f, 0.5f, -0.5f, -0.5f,
-        0.5f, -0.5f };
+const GLfloat gTriangleVertices[] = {-0.5f, -0.25f,
+                                     0.5f, -0.25f,
+                                     0.0f, 0.559016994f};
 
 void renderFrame() {
     static float black = 0.f;
     glClearColor(black, black, black, 1.0f);
     checkGlError("glClearColor");
-    glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     checkGlError("glClear");
 
     glUseProgram(gProgram);
@@ -147,16 +148,16 @@ void renderFrame() {
 }
 
 extern "C" {
-    JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_init(JNIEnv * env, jclass obj,  jint width, jint height);
-    JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv * env, jclass obj);
+JNIEXPORT void JNICALL
+Java_com_android_gl2jni_GL2JNILib_init(JNIEnv *env, jclass obj, jint width, jint height);
+JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv *env, jclass obj);
 };
 
-extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_init(JNIEnv * env, jclass obj,  jint width, jint height)
-{
+extern "C" JNIEXPORT void JNICALL
+Java_com_android_gl2jni_GL2JNILib_init(JNIEnv *env, jclass obj, jint width, jint height) {
     setupGraphics(width, height);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv * env, jclass obj)
-{
+extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv *env, jclass obj) {
     renderFrame();
 }
