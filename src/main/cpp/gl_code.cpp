@@ -202,15 +202,16 @@ void renderFrame() {
 
 extern "C" {
 JNIEXPORT void JNICALL
-Java_com_android_gl2jni_GL2JNILib_init(JNIEnv *env, jclass obj, jint width, jint height);
+Java_com_lemoncookies_shapes_GL2JNILib_init(JNIEnv *env, jclass obj, jint width, jint height);
 JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv *env, jclass obj);
 };
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_android_gl2jni_GL2JNILib_init(JNIEnv *env, jclass obj, jint width, jint height) {
+Java_com_lemoncookies_shapes_GL2JNILib_init(JNIEnv *env, jclass obj, jint width, jint height) {
     setupGraphics(width, height);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv *env, jclass obj) {
+extern "C" JNIEXPORT void JNICALL
+Java_com_lemoncookies_shapes_GL2JNILib_step(JNIEnv *env, jclass obj) {
     renderFrame();
 }

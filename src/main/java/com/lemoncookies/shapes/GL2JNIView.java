@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.gl2jni;
+package com.lemoncookies.shapes;
 /*
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -35,10 +35,7 @@ package com.android.gl2jni;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
-import android.util.AttributeSet;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
