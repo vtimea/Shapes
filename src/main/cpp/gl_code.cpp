@@ -8,26 +8,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include <vector>
-
 #include "glm/glm/glm.hpp"
 
 #define  LOG_TAG    "libgl2jni"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
+using namespace glm;
 std::vector<float> projMatrix;
-
-static void printGLString(const char *name, GLenum s) {
-    const char *v = (const char *) glGetString(s);
-    LOGI("GL %s = %s\n", name, v);
-}
-
-static void checkGlError(const char *op) {
-    for (GLint error = glGetError(); error; error
-                                                    = glGetError()) {
-        LOGI("after %s() glError (0x%x)\n", op, error);
-    }
-}
 
 auto gVertexShader =
         "uniform mat4 projMatrix;\n"
@@ -38,8 +26,9 @@ auto gVertexShader =
 
 auto gFragmentShader =
         "precision mediump float;\n"
+        "uniform vec3 mColor;\n"
         "void main() {\n"
-        "  gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);\n"
+        "gl_FragColor = vec4(mColor, 1.0);"
         "}\n";
 
 GLuint loadShader(GLenum shaderType, const char *pSource) {
@@ -82,9 +71,7 @@ GLuint createProgram(const char *pVertexSource, const char *pFragmentSource) {
     GLuint program = glCreateProgram();
     if (program) {
         glAttachShader(program, vertexShader);
-        checkGlError("glAttachShader");
         glAttachShader(program, pixelShader);
-        checkGlError("glAttachShader");
         glLinkProgram(program);
         GLint linkStatus = GL_FALSE;
         glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
@@ -108,13 +95,9 @@ GLuint createProgram(const char *pVertexSource, const char *pFragmentSource) {
 
 GLuint gProgram;
 GLuint gvPositionHandle;
+const float SCALE = 100;
 
 bool setupGraphics(int w, int h) {
-    printGLString("Version", GL_VERSION);
-    printGLString("Vendor", GL_VENDOR);
-    printGLString("Renderer", GL_RENDERER);
-    printGLString("Extensions", GL_EXTENSIONS);
-
     LOGI("setupGraphics(%d, %d)", w, h);
     gProgram = createProgram(gVertexShader, gFragmentShader);
     if (!gProgram) {
@@ -122,17 +105,15 @@ bool setupGraphics(int w, int h) {
         return false;
     }
     gvPositionHandle = static_cast<GLuint>(glGetAttribLocation(gProgram, "vPosition"));
-    checkGlError("glGetAttribLocation");
     LOGI("glGetAttribLocation(\"vPosition\") = %d\n",
          gvPositionHandle);
 
     glViewport(0, 0, w, h);
-    checkGlError("glViewport");
 
     glUseProgram(gProgram);
     float ratio = h / (float) w;
-    projMatrix = {ratio, 0, 0, 0,
-                  0, 1, 0, 0,
+    projMatrix = {ratio / SCALE, 0, 0, 0,
+                  0, 1 / SCALE, 0, 0,
                   0, 0, 1, 0,
                   0, 0, 0, 1};
 
@@ -143,26 +124,40 @@ bool setupGraphics(int w, int h) {
     return true;
 }
 
-const GLfloat gTriangleVertices[] = {-0.5f, -0.25f,
-                                     0.5f, -0.25f,
-                                     0.0f, 0.559016994f};
+void setColor(glm::vec3 color) {
+    GLint loc = glGetUniformLocation(gProgram, "mColor");
+    if (loc != -1) {
+        glUniform3fv(loc, 1, &color[0]);
+    }
+}
+
+class Polygon {
+    std::vector<vec2> mPoints;
+    vec3 mColor;
+
+public:
+    Polygon(std::vector<glm::vec2> points, vec3 color) : mPoints{points}, mColor(color) {}
+
+    void draw() const {
+        setColor(mColor);
+        glVertexAttribPointer(gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0, &mPoints[0]);
+        glEnableVertexAttribArray(gvPositionHandle);
+        glDrawArrays(GL_TRIANGLES, 0, mPoints.size());
+    }
+};
+
+const Polygon triangle = Polygon({{-20.f, -20.f},
+                                  {0.f,   17.32f},
+                                  {20.f,  -20.f}},
+                                 {0.f, 1.f, 0.f});
 
 void renderFrame() {
     static float black = 0.f;
     glClearColor(black, black, black, 1.0f);
-    checkGlError("glClearColor");
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    checkGlError("glClear");
 
     glUseProgram(gProgram);
-    checkGlError("glUseProgram");
-
-    glVertexAttribPointer(gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
-    checkGlError("glVertexAttribPointer");
-    glEnableVertexAttribArray(gvPositionHandle);
-    checkGlError("glEnableVertexAttribArray");
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    checkGlError("glDrawArrays");
+    triangle.draw();
 }
 
 extern "C" {
